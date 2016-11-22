@@ -15,6 +15,7 @@ typedef enum {
 
 /*
 声明json的数据结构，每个节点使用lept_value来表示
+目前只包含类型
 */
 typedef struct { lept_type type; } lept_value;
 
