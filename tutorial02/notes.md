@@ -13,7 +13,15 @@ typedef struct {
 } lept_value;
 ```
 
-## 函数修改
+## 函数
+### 函数说明
+1. `lept_parse`是分割的入口，
+	* 负责封装json字符串
+	* 调用`lept_parse_whitespace`和`lept_parse_value`
+	* 实际分割后的检查，如果分割动作完成后，指向的字符并非'\0'，则表示非法值导致分割不完全
+2. `lept_parse_value`会根据第一个字母将任务分发给不同的分割函数
+3. `EXPECT`和每次分割，不管是whitespace还是value，都会移动首字符指针的位置
+
 ### 新增函数`lept_get_number`
 ```
 double lept_get_number(const lept_value *v){
@@ -43,6 +51,7 @@ static int lept_parse_number(lept_context *c,lept_value *v){
 	将其赋值为中止处的地址。
 	* 除了该函数外，同系列的还有`strtof,strtodl`，分别返回`float`和`long double`类型
 	* 测试代码
+	
 	```
 	#include <stdio.h>
 	#include <stdlib.h>
@@ -61,6 +70,7 @@ static int lept_parse_number(lept_context *c,lept_value *v){
 	}
 	```
 	* 输出结果
+	
 	```
 	result:1234.5678
 	end:dfs
