@@ -81,3 +81,6 @@ static int lept_parse_number(lept_context *c,lept_value *v){
 	
 2. `if(c->json == end)`判断错误
 	如果`c->json`和`end`指向同一处地址，则证明第一个非空字符（在本例中为第一个字符）就是不合法字符。
+## 其他
+### 关于重构
+>在不改变代码外在行为的情况下，对代码作出修改，以改进程序的内部结构
