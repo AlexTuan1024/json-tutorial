@@ -18,8 +18,8 @@ typedef struct {
     struct {
       char *s;
       size_t len;
-    } s;      /* string: null-terminated string, string length */
-    double n; /* number */
+    } s;
+    double n;
   } u;
   lept_type type;
 } lept_value;

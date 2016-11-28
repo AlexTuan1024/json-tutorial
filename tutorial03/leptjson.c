@@ -180,14 +180,16 @@ int lept_get_boolean(const lept_value *v) {
   return 0;
 }
 
-void lept_set_boolean(lept_value *v, int b) { /* \TODO */ }
+void lept_set_boolean(lept_value *v, int b) { /* \TODO */
+}
 
 double lept_get_number(const lept_value *v) {
   assert(v != NULL && v->type == LEPT_NUMBER);
   return v->u.n;
 }
 
-void lept_set_number(lept_value *v, double n) { /* \TODO */ }
+void lept_set_number(lept_value *v, double n) { /* \TODO */
+}
 
 const char *lept_get_string(const lept_value *v) {
   assert(v != NULL && v->type == LEPT_STRING);
@@ -200,11 +202,13 @@ size_t lept_get_string_length(const lept_value *v) {
 }
 
 void lept_set_string(lept_value *v, const char *s, size_t len) {
+  // assert means something has to be true.
   assert(v != NULL && (s != NULL || len == 0));
   lept_free(v);
+  // malloc takes one param:size_t size(byte)
   v->u.s.s = (char *)malloc(len + 1);
   memcpy(v->u.s.s, s, len);
-  v->u.s.s[len] = '\0';
-  v->u.s.len = len;
+  v->u.s.s[len] = '\0'; // the last char must be '\0'
+  v->u.s.len = len;     // real length of this string.
   v->type = LEPT_STRING;
 }
