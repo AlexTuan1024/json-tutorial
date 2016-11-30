@@ -1,7 +1,7 @@
+#include "leptjson.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "leptjson.h"
 
 static int main_ret = 0;
 static int test_count = 0;
@@ -205,7 +205,8 @@ static void test_access_boolean() {
   /* Use EXPECT_TRUE() and EXPECT_FALSE() */
 }
 
-static void test_access_number() { /* \TODO */ }
+static void test_access_number() { /* \TODO */
+}
 
 static void test_access_string() {
   lept_value v;
