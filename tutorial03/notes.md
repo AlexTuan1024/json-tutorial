@@ -14,6 +14,7 @@ void* memcpy(void *restrict dst,
 
 ### 动态数组
 详见缓冲区与堆栈
+### 内存分配函数
 ## 函数与设计
 ### JSON中的转义编码
 ```
@@ -146,6 +147,45 @@ int lept_parse(lept_value *v, const char *json) {
 6. ...
 7. 断言检查，栈顶为0
 8. 释放栈内存
+
+#### 栈的压入与弹出
+
+```c
+#ifndef LEPT_PARSE_STACK_INIT_SIZE
+#define LEPT_PARSE_STACK_INIT_SIZE 256
+#endif
+
+static void* lept_context_push(lept_context* c, size_t size) {
+    void* ret;
+    assert(size > 0);
+    if (c->top + size >= c->size) {
+        if (c->size == 0)
+            c->size = LEPT_PARSE_STACK_INIT_SIZE;
+        while (c->top + size >= c->size)
+            c->size += c->size >> 1;  /* c->size * 1.5 */
+        c->stack = (char*)realloc(c->stack, c->size);
+    }
+    ret = c->stack + c->top;
+    c->top += size;
+    return ret;
+}
+
+static void* lept_context_pop(lept_context* c, size_t size) {
+    assert(c->top >= size);
+    return c->stack + (c->top -= size);
+}
+```
+##### 压入
+1. `lept_context_push`接收json上下文指针和字符个数，允许压入任意数量的字符，返回`void*`指针，指向的位置是**待压入数据应该存放的起始位置**
+2. 创建返回值指针
+3. 断言条件`size>0`
+4. 检查栈的剩余空间与内存分配
+5. 修改栈顶指针
+6. 返回**保存待压入数据的位置**
+
+##### 弹出
+1. `lept_context_pop`，返回**待弹出的字符串的起始位置**
+2. 待弹出的字符数，必须少于栈内的字符数
 
 ## 单元测试修改
 应用方的代码在调用`lept_parse()`之后，最终也应该调用`lept_free()`来释放内存。
