@@ -1,5 +1,5 @@
 # 解析字符串 笔记
-## C语言语法与函数
+## C语言语法、函数与数据结构
 ### memcpy
 ```c
 void* memcpy(void *restrict dst,
@@ -12,6 +12,8 @@ void* memcpy(void *restrict dst,
 
 1. 使用`memcpy`要注意`dst`和`src`不能有重叠区域，否则结果是未定义的。
 
+### 动态数组
+详见缓冲区与堆栈
 ## 函数与设计
 ### JSON中的转义编码
 ```
@@ -88,6 +90,7 @@ void lept_free(lept_value *v) {
     (v)->type = LEPT_NULL;                                                     \
   } while (0)
 ```
+
 1. 初始化即将json值的初始类型设置为`LEPT_NULL`
 2. 使用`do{...}while(0)`的目的是为了保证语句能够正确执行，并不会与条件语句等相互影响
 
@@ -96,6 +99,53 @@ void lept_free(lept_value *v) {
 #define lept_set_null(v) lept_free(v)
 ```
 1. 本质上就是释放函数，所以只用一个宏来定义
+
+### 缓冲区与堆栈
+我们解析字符串时，需要：
+1. 先把解析的结果存在一个临时的缓冲区
+2. 用`lept_set_string()`把缓冲区的结果设置到`lept_value`中
+在完成解析一个字符串之前，缓冲区的大小是不能预知的，因此我们需要一个能自动扩展空间的数据结构，即**动态数组(dynamic array)**
+
+如果每次解析字符串时，都重新建一个动态数组，那么是比较耗时的。我们可以重用这个动态数组，每次解析 JSON 时就只需要创建一个。而且我们将会发现，无论是解析字符串、数组或对象，我们也只需要以先进后出的方式访问这个动态数组。换句话说，我们需要一个动态的堆栈数据结构。
+
+```c
+typedef struct {
+    const char* json;
+    char* stack;
+    size_t size, top;
+}lept_context;
+```
+#### 修改`lept_parse()`函数
+```c
+int lept_parse(lept_value *v, const char *json) {
+  lept_context c;
+  int ret;
+  assert(v != NULL);
+  c.json = json;
+  c.stack = NULL;
+  c.size = c.top = 0;
+  lept_init(v);
+  lept_parse_whitespace(&c);
+  if ((ret = lept_parse_value(&c, v)) == LEPT_PARSE_OK) {
+    lept_parse_whitespace(&c);
+    if (*c.json != '\0') {
+      v->type = LEPT_NULL;
+      ret = LEPT_PARSE_ROOT_NOT_SINGULAR;
+    }
+  }
+  assert(c.top == 0);
+  free(c.stack);
+  return ret;
+}
+```
+1. 返回值为`int`，接收参数`lept_value*`和`const char*`
+2. 创建一个`lept_context`的json上下文,初始化返回值
+3. 断言条件`lept_value*`不为空
+4. 初始化栈和栈顶指针
+5. 初始化`lept_value`
+6. ...
+7. 断言检查，栈顶为0
+8. 释放栈内存
 
 ## 单元测试修改
 应用方的代码在调用`lept_parse()`之后，最终也应该调用`lept_free()`来释放内存。
