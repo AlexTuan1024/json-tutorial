@@ -17,6 +17,13 @@ void* memcpy(void *restrict dst,
 详见缓冲区与堆栈
 ### 内存分配函数
 ## 函数与设计
+**注意事项**：
+
+1.  在解析过程中，`lept_parse_**`,`lept_context_**`函数和宏`EXPECT`，会对`lept_context`对象的内容作出更改。
+2. `lept_parse_**`函数，在解析成功后，必须修改`lept_context`，不能遗漏 
+3. 解析过程中，为防止发生异常导致上下文内容无法恢复，需要复制一份进行读取，如果解析成功，再修改`lept_context`上下文
+4. 不可更改的字符串要用`const char*`
+
 ### JSON中的转义编码
 ```
 string = quotation-mark *char quotation-mark
@@ -176,17 +183,63 @@ static void* lept_context_pop(lept_context* c, size_t size) {
     return c->stack + (c->top -= size);
 }
 ```
-##### 压入
-1. `lept_context_push`接收json上下文指针和字符个数，允许压入任意数量的字符，返回`void*`指针，指向的位置是**待压入数据应该存放的起始位置**
+##### 压入前
+1. `lept_context_push`接收json上下文指针和字符个数，允许压入任意数量的字符。返回**待压入数据应该存放的起始位置**，`void*`型。
 2. 创建返回值指针
 3. 断言条件`size>0`
 4. 检查栈的剩余空间与内存分配
-5. 修改栈顶指针
+    * 如果当前为空，则将栈大小设置为初始大小
+    * 如果当前不为空，并会溢出，则循环检查溢出状态，按照1.5倍比例重新分配内存
+5. 修改栈顶位置，修改为增加若干字符后的位置
 6. 返回**保存待压入数据的位置**
 
+#### 单字符压入
+我们需要采用对字符的修改进行压入，使用一个宏进行逐字符修改
+
+```c
+#define PUTC(c, ch)                                                            \
+  do {                                                                         \
+    *(char *)lept_context_push(c, sizeof(char)) = (ch);                        \
+  } while (0)
+```
 ##### 弹出
 1. `lept_context_pop`，返回**待弹出的字符串的起始位置**
 2. 待弹出的字符数，必须少于栈内的字符数
+3. 修改上下文结构内的栈顶位置
+
+### 解析字符串函数
+未做转义处理和不合法字符校验。
+
+1. 接收参数`lept_context*`和`lept_value*`，返回解析结果标记
+2. 在此过程中`lept_context.top`会被修改，如果字符串正确（"*"）
+    * 备份`lept_context.top`为`head`
+    * 处理字符，期间`lept_context.top`有改动
+    * 语句`len=c->top-head`计算字符串长度
+3. 返回parse结果标记
+
+```c
+static int lept_parse_string(lept_context *c, lept_value *v) {
+  size_t head = c->top, len;
+  const char *p;
+  EXPECT(c, '\"');
+  p = c->json;
+  for (;;) {
+    char ch = *p++;
+    switch (ch) {
+    case '\"':
+      len = c->top - head;
+      lept_set_string(v, (const char *)lept_context_pop(c, len), len);
+      c->json = p;
+      return LEPT_PARSE_OK;
+    case '\0':
+      c->top = head;
+      return LEPT_PARSE_MISS_QUOTATION_MARK;
+    default:
+      PUTC(c, ch);
+    }
+  }
+}
+```
 
 ## 单元测试修改
 应用方的代码在调用`lept_parse()`之后，最终也应该调用`lept_free()`来释放内存。
