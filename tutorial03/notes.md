@@ -212,7 +212,9 @@ static void* lept_context_pop(lept_context* c, size_t size) {
 
 1. 接收参数`lept_context*`和`lept_value*`，返回解析结果标记
 2. 在此过程中`lept_context.top`会被修改，如果字符串正确（"*"）
-    * 备份`lept_context.top`为`head`
+    * 备份`lept_context.top`为`head`：
+        * 栈顶在解析过程中发生变化，一旦中途错误，恢复栈顶
+        * 解析完成后，使用栈顶指针和起始位置`head`计算长度`len`
     * 处理字符，期间`lept_context.top`有改动
     * 语句`len=c->top-head`计算字符串长度
 3. 返回parse结果标记
