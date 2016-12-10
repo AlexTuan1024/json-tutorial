@@ -104,7 +104,8 @@ static const char* lept_parse_hex4(const char* p, unsigned* u) {
   return p;
 }
 
-static void lept_encode_utf8(lept_context* c, unsigned u) { /* \TODO */ }
+static void lept_encode_utf8(lept_context* c, unsigned u) { /* \TODO */
+}
 
 #define STRING_ERROR(ret) \
   do {                    \

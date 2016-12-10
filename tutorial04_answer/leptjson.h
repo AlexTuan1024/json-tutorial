@@ -3,30 +3,44 @@
 
 #include <stddef.h> /* size_t */
 
-typedef enum { LEPT_NULL, LEPT_FALSE, LEPT_TRUE, LEPT_NUMBER, LEPT_STRING, LEPT_ARRAY, LEPT_OBJECT } lept_type;
+typedef enum {
+  LEPT_NULL,
+  LEPT_FALSE,
+  LEPT_TRUE,
+  LEPT_NUMBER,
+  LEPT_STRING,
+  LEPT_ARRAY,
+  LEPT_OBJECT
+} lept_type;
 
 typedef struct {
-    union {
-        struct { char* s; size_t len; }s;  /* string: null-terminated string, string length */
-        double n;                          /* number */
-    }u;
-    lept_type type;
-}lept_value;
+  union {
+    struct {
+      char* s;
+      size_t len;
+    } s;      /* string: null-terminated string, string length */
+    double n; /* number */
+  } u;
+  lept_type type;
+} lept_value;
 
 enum {
-    LEPT_PARSE_OK = 0,
-    LEPT_PARSE_EXPECT_VALUE,
-    LEPT_PARSE_INVALID_VALUE,
-    LEPT_PARSE_ROOT_NOT_SINGULAR,
-    LEPT_PARSE_NUMBER_TOO_BIG,
-    LEPT_PARSE_MISS_QUOTATION_MARK,
-    LEPT_PARSE_INVALID_STRING_ESCAPE,
-    LEPT_PARSE_INVALID_STRING_CHAR,
-    LEPT_PARSE_INVALID_UNICODE_HEX,
-    LEPT_PARSE_INVALID_UNICODE_SURROGATE
+  LEPT_PARSE_OK = 0,
+  LEPT_PARSE_EXPECT_VALUE,
+  LEPT_PARSE_INVALID_VALUE,
+  LEPT_PARSE_ROOT_NOT_SINGULAR,
+  LEPT_PARSE_NUMBER_TOO_BIG,
+  LEPT_PARSE_MISS_QUOTATION_MARK,
+  LEPT_PARSE_INVALID_STRING_ESCAPE,
+  LEPT_PARSE_INVALID_STRING_CHAR,
+  LEPT_PARSE_INVALID_UNICODE_HEX,
+  LEPT_PARSE_INVALID_UNICODE_SURROGATE
 };
 
-#define lept_init(v) do { (v)->type = LEPT_NULL; } while(0)
+#define lept_init(v)       \
+  do {                     \
+    (v)->type = LEPT_NULL; \
+  } while (0)
 
 int lept_parse(lept_value* v, const char* json);
 
